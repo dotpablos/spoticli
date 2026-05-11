@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spotify Auth Complete</title>
+    <meta
+      name="description"
+      content="Spotify authentication succeeded. Return to your terminal to continue."
+    />
+    <style>
+      :root {
+        --bg: #07110c;
+        --bg-soft: #0d1f16;
+        --panel: rgba(7, 17, 12, 0.88);
+        --panel-border: rgba(93, 255, 146, 0.2);
+        --spotify: #1db954;
+        --spotify-soft: #1ed760;
+        --text: #ecfff2;
+        --muted: #9bcaa9;
+        --warning: #b7ffcb;
+        --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background:
+          radial-gradient(circle at top, rgba(29, 185, 84, 0.18), transparent 38%),
+          linear-gradient(180deg, #08150f 0%, #030806 100%);
+        color: var(--text);
+        font-family:
+          "SFMono-Regular", "Cascadia Code", "JetBrains Mono", "Fira Code", Consolas,
+          "Liberation Mono", Menlo, monospace;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        overflow: hidden;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(
+            rgba(255, 255, 255, 0.02) 50%,
+            rgba(0, 0, 0, 0.02) 50%
+          );
+        background-size: 100% 4px;
+        opacity: 0.16;
+      }
+
+      .shell {
+        width: min(760px, 100%);
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        backdrop-filter: blur(18px);
+      }
+
+      .shell-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 18px;
+        background: rgba(255, 255, 255, 0.04);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .dots {
+        display: flex;
+        gap: 8px;
+      }
+
+      .dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .dot:first-child {
+        background: #ff5f57;
+      }
+
+      .dot:nth-child(2) {
+        background: #febc2e;
+      }
+
+      .dot:nth-child(3) {
+        background: var(--spotify);
+      }
+
+      .shell-title {
+        color: var(--muted);
+        font-size: 0.82rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .content {
+        padding: 28px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 14px;
+        border-radius: 999px;
+        background: rgba(29, 185, 84, 0.12);
+        border: 1px solid rgba(29, 185, 84, 0.3);
+        color: var(--warning);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .badge::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--spotify-soft);
+        box-shadow: 0 0 14px var(--spotify-soft);
+      }
+
+      h1 {
+        margin: 20px 0 12px;
+        font-size: clamp(2rem, 4vw, 3.8rem);
+        line-height: 0.95;
+        letter-spacing: -0.05em;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 1.02rem;
+        line-height: 1.7;
+        max-width: 60ch;
+      }
+
+      .terminal {
+        margin-top: 28px;
+        padding: 20px;
+        border-radius: 16px;
+        background:
+          linear-gradient(180deg, rgba(29, 185, 84, 0.08), rgba(29, 185, 84, 0.02)),
+          rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(29, 185, 84, 0.18);
+      }
+
+      .line {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        font-size: 1rem;
+        line-height: 1.75;
+      }
+
+      .prompt {
+        color: var(--spotify-soft);
+      }
+
+      .command {
+        color: var(--text);
+      }
+
+      .cursor {
+        display: inline-block;
+        width: 0.7ch;
+        height: 1.05em;
+        margin-left: 3px;
+        vertical-align: -0.18em;
+        background: var(--spotify-soft);
+        animation: blink 1s steps(1) infinite;
+      }
+
+      .steps {
+        display: grid;
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .step {
+        padding: 14px 16px;
+        border-left: 2px solid rgba(29, 185, 84, 0.35);
+        background: rgba(255, 255, 255, 0.025);
+        color: var(--muted);
+      }
+
+      .step strong {
+        color: var(--text);
+      }
+
+      .footer {
+        margin-top: 26px;
+        font-size: 0.92rem;
+        color: rgba(236, 255, 242, 0.68);
+      }
+
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .content {
+          padding: 22px;
+        }
+
+        h1 {
+          line-height: 1;
+        }
+
+        .terminal {
+          padding: 16px;
+        }
+
+        .line {
+          font-size: 0.95rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell" aria-label="Spotify authentication complete">
+      <div class="shell-bar">
+        <div class="dots" aria-hidden="true">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+        <div class="shell-title">spoticli auth callback</div>
+      </div>
+
+      <section class="content">
+        <div class="badge">Spotify Connected</div>
+        <h1>Authentication complete.</h1>
+        <p>
+          Spotify has approved this sign-in. Return to your terminal to finish the
+          session and continue using the app.
+        </p>
+
+        <div class="terminal" role="status" aria-live="polite">
+          <div class="line">
+            <span class="prompt">$</span>
+            <span class="command">Authorization received. Switch back to your terminal<span class="cursor"></span></span>
+          </div>
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <strong>Next:</strong> swap back to the terminal window running
+            <code>spoticli</code>.
+          </div>
+          <div class="step">
+            <strong>Then:</strong> wait for the app to complete the login flow
+            automatically.
+          </div>
+          <div class="step">
+            <strong>After that:</strong> this browser tab can be left open or closed.
+          </div>
+        </div>
+
+        <p class="footer">No further action is needed on this page.</p>
+      </section>
+    </main>
+  </body>
+</html>
