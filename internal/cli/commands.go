@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/dotpablos/spoticli/internal/spotifysession"
+	"github.com/pkg/browser"
 	"github.com/zalando/go-keyring"
 	spotifyapi "github.com/zmb3/spotify/v2"
 )
@@ -203,6 +204,15 @@ func commandList() []command {
 				return nil
 			},
 		},
+		{
+			name:         "new-device",
+			description:  "Opens a spotify tab on your default browser.",
+			requiresAuth: true,
+			run: func(args []string, client *spotifyapi.Client) error {
+				browser.OpenURL("http://open.spotify.com")
+				return nil
+			},
+		},
 	}
 }
 
@@ -292,10 +302,6 @@ func runPlayerCommand(ctx context.Context, client *spotifyapi.Client, run func(c
 func explainPlayerCommandError(ctx context.Context, client *spotifyapi.Client, err error) error {
 	var spotifyErr spotifyapi.Error
 	if !errors.As(err, &spotifyErr) {
-		return err
-	}
-
-	if spotifyErr.Status != 403 || !strings.EqualFold(spotifyErr.Message, "Restriction violated") {
 		return err
 	}
 
