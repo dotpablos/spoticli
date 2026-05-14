@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/dotpablos/spoticli/internal/cli"
+	"github.com/dotpablos/vibel/internal/cli"
 )
 
 func main() {

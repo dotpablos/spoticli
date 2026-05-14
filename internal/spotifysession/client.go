@@ -16,7 +16,7 @@ func NewSpotifyClient(ctx context.Context) (*spotifyapi.Client, error) {
 	token, err := LoadToken()
 	if err != nil {
 		if errors.Is(err, keyring.ErrNotFound) {
-			return nil, fmt.Errorf("no Spotify session found; run `spoticli login` first")
+			return nil, fmt.Errorf("no Spotify session found; run `vibel login` first")
 		}
 
 		return nil, fmt.Errorf("load Spotify token: %w", err)
@@ -27,7 +27,7 @@ func NewSpotifyClient(ctx context.Context) (*spotifyapi.Client, error) {
 	}
 
 	if token.RefreshToken == "" {
-		return nil, fmt.Errorf("stored Spotify session has expired; run `spoticli logout` then `spoticli login` to refresh it")
+		return nil, fmt.Errorf("stored Spotify session has expired; run `vibel logout` then `vibel login` to refresh it")
 	}
 
 	auth, err := NewAuthenticator()

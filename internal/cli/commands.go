@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dotpablos/spoticli/internal/spotifysession"
+	"github.com/dotpablos/vibel/internal/spotifysession"
 	"github.com/pkg/browser"
 	"github.com/zalando/go-keyring"
 	spotifyapi "github.com/zmb3/spotify/v2"
@@ -223,7 +223,7 @@ func RunCLI(args []string) error {
 
 	cmd, ok := findCommand(args[0])
 	if !ok {
-		return fmt.Errorf("spoticli unknown command %q, try `spoticli help`", args[0])
+		return fmt.Errorf("vibel unknown command %q, try `vibel help`", args[0])
 	}
 
 	return cmd.execute(args[1:])
@@ -241,10 +241,10 @@ func findCommand(name string) (command, bool) {
 
 func printHelp() {
 	fmt.Println(`
-SPOTICLI
-In order to launch the TUI, just enter "spoticli" with no additional flags.
+VIBEL
+In order to launch the TUI, just enter "vibel" with no additional flags.
 
-USAGE: spoticli [COMMAND] [AMOUNT (if needed)]
+USAGE: vibel [COMMAND] [AMOUNT (if needed)]
 
 Note: The CLI is meant to be used to interface with Spotify for simple actions.
 Commands cannot be chained.
@@ -265,14 +265,13 @@ func runHelp(args []string, _ *spotifyapi.Client) error {
 	if err := requireNoArgs("help", args); err != nil {
 		return err
 	}
-
 	printHelp()
 	return nil
 }
 
 func requireNoArgs(name string, args []string) error {
 	if len(args) != 0 {
-		return fmt.Errorf("usage: spoticli %s", name)
+		return fmt.Errorf("usage: vibel %s", name)
 	}
 
 	return nil
@@ -280,7 +279,7 @@ func requireNoArgs(name string, args []string) error {
 
 func requirePositiveCountArg(args []string) (int, error) {
 	if len(args) != 1 {
-		return 0, fmt.Errorf("usage: spoticli list <count>")
+		return 0, fmt.Errorf("usage: vibel list <count>")
 	}
 
 	count, err := strconv.Atoi(args[0])
@@ -302,6 +301,10 @@ func runPlayerCommand(ctx context.Context, client *spotifyapi.Client, run func(c
 func explainPlayerCommandError(ctx context.Context, client *spotifyapi.Client, err error) error {
 	var spotifyErr spotifyapi.Error
 	if !errors.As(err, &spotifyErr) {
+		return err
+	}
+
+	if client == nil {
 		return err
 	}
 

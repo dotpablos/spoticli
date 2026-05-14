@@ -1,4 +1,4 @@
-module github.com/dotpablos/spoticli
+module github.com/dotpablos/vibel
 
 go 1.26.1
 

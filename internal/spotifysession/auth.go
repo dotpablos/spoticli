@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	service            = "spoticli"
+	service            = "vibel"
 	user               = "spotify-token"
 	defaultRedirectURI = "http://127.0.0.1:8080/callback"
 	loginTimeout       = 2 * time.Minute
