@@ -4,6 +4,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/dotpablos/vibel/internal/models"
 	spotifyapi "github.com/zmb3/spotify/v2"
+
+	lipgloss "github.com/charmbracelet/lipgloss"
 )
 
 type screen int
@@ -18,12 +20,14 @@ const (
 type appModel struct {
 	client *spotifyapi.Client
 
-	currentScreen screen
+	width  int
+	height int
 
-	login  *models.LoginModel
-	search *screenModel
-	player *screenModel
-	queue  *screenModel
+	currentScreen screen
+	login         *models.LoginModel
+	search        *screenModel
+	player        *screenModel
+	queue         *screenModel
 }
 
 func NewAppModel() *appModel {
@@ -42,8 +46,9 @@ func (m *appModel) Init() tea.Cmd {
 }
 
 func (m *appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if key, ok := msg.(tea.KeyMsg); ok {
-		switch key.String() {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
 		case "1":
@@ -55,6 +60,9 @@ func (m *appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "4":
 			m.currentScreen = screenQueue
 		}
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
 	}
 
 	switch m.currentScreen {
@@ -72,16 +80,19 @@ func (m *appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *appModel) View() string {
-	switch m.currentScreen {
-	case screenLogin:
-		return m.login.View()
-	case screenSearch:
-		return m.search.View()
-	case screenPlayer:
-		return m.player.View()
-	case screenQueue:
-		return m.queue.View()
-	default:
-		return "Unknown screen"
-	}
+	style := lipgloss.NewStyle()
+	return style.Render(func() string {
+		switch m.currentScreen {
+		case screenLogin:
+			return m.login.View()
+		case screenSearch:
+			return m.search.View()
+		case screenPlayer:
+			return m.player.View()
+		case screenQueue:
+			return m.queue.View()
+		default:
+			return "Unknown screen"
+		}
+	}())
 }

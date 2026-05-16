@@ -14,7 +14,7 @@ func main() {
 
 	// TUI Entry
 	if len(userArgs) == 0 {
-		p := tea.NewProgram(tui.NewAppModel())
+		p := tea.NewProgram(tui.NewAppModel(), tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			fmt.Fprintf(os.Stderr, "Something went wrong when starting the TUI: %v\n", err)
 			os.Exit(1)
