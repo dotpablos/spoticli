@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/browser"
@@ -33,6 +34,15 @@ var callbackPage []byte
 
 type loginResult struct {
 	err error
+}
+
+type LoginSession struct {
+	URL          string
+	server       *http.Server
+	results      chan loginResult
+	serverErrors chan error
+	closed       chan struct{}
+	closeOnce    sync.Once
 }
 
 func NewAuthenticator() (*spotifyauth.Authenticator, error) {
@@ -57,15 +67,34 @@ func NewAuthenticator() (*spotifyauth.Authenticator, error) {
 	), nil
 }
 
-func Login(auth *spotifyauth.Authenticator) error {
-	state, err := randomState()
+func Login(auth *spotifyauth.Authenticator, output bool) error {
+	session, err := StartLogin(auth)
 	if err != nil {
 		return err
 	}
 
+	if output {
+		fmt.Fprintln(os.Stdout, "Please log in to Spotify by visiting the following URL: "+session.URL)
+		fmt.Fprintln(os.Stdout, "Waiting for Spotify to complete authentication...")
+	}
+	if err := session.Open(); err != nil {
+		if output {
+			fmt.Fprintf(os.Stdout, "Could not open the browser automatically: %v\n", err)
+		}
+	}
+
+	return session.Wait()
+}
+
+func StartLogin(auth *spotifyauth.Authenticator) (*LoginSession, error) {
+	state, err := randomState()
+	if err != nil {
+		return nil, err
+	}
+
 	addr, callbackPath, err := listenAddrFromRedirectURI(redirectURI())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	results := make(chan loginResult, 1)
@@ -95,7 +124,7 @@ func Login(auth *spotifyauth.Authenticator) error {
 
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		return fmt.Errorf("listen for Spotify callback on %s: %w", addr, err)
+		return nil, fmt.Errorf("listen for Spotify callback on %s: %w", addr, err)
 	}
 
 	go func() {
@@ -104,22 +133,44 @@ func Login(auth *spotifyauth.Authenticator) error {
 		}
 	}()
 
-	url := auth.AuthURL(state)
-	fmt.Println("Please log in to Spotify by visiting the following URL: " + url)
-	fmt.Println("Waiting for Spotify to complete authentication...")
-	if err := browser.OpenURL(url); err != nil {
-		fmt.Printf("Could not open the browser automatically: %v\n", err)
+	return &LoginSession{
+		URL:          auth.AuthURL(state),
+		server:       server,
+		results:      results,
+		serverErrors: serverErrors,
+		closed:       make(chan struct{}),
+	}, nil
+}
+
+func (s *LoginSession) Open() error {
+	return browser.OpenURL(s.URL)
+}
+
+func (s *LoginSession) Wait() error {
+	if s == nil {
+		return nil
 	}
 
-	defer shutdownServer(server)
+	defer s.Close()
 
 	select {
-	case result := <-results:
+	case result := <-s.results:
 		return result.err
-	case err := <-serverErrors:
+	case err := <-s.serverErrors:
 		return err
+	case <-s.closed:
+		return nil
 	case <-time.After(loginTimeout):
 		return fmt.Errorf("timed out waiting for Spotify callback after %s", loginTimeout)
+	}
+}
+
+func (s *LoginSession) Close() {
+	if s != nil {
+		s.closeOnce.Do(func() {
+			close(s.closed)
+			shutdownServer(s.server)
+		})
 	}
 }
 
@@ -139,6 +190,15 @@ func LoadToken() (*oauth2.Token, error) {
 	}
 
 	return unmarshalToken(raw)
+}
+
+func HasValidSavedToken() bool {
+	token, err := LoadToken()
+	if err != nil || token == nil {
+		return false
+	}
+
+	return token.Valid()
 }
 
 func DeleteToken() error {
